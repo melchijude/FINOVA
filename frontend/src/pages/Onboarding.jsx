@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import './Onboarding.css'
@@ -22,19 +22,35 @@ const CATEGORIES = [
   'Rent/Housing', 'Subscriptions', 'Travel', 'Health & Fitness'
 ]
 
+const STORAGE_KEY = 'finova_onboarding_form'
+
 export default function Onboarding({ setUserProfile, setDiagnosis }) {
   const navigate = useNavigate()
   const [step, setStep] = useState(0)
   const [loading, setLoading] = useState(false)
-  const [form, setForm] = useState({
-    name: '', age: '', monthly_income: '', monthly_expenses: '',
-    savings_rate: '', spending_categories: {},
-    financial_goals: [], financial_challenges: [],
-    risk_tolerance: '', investment_experience: '',
-    debt_status: '', lifestyle: ''
+  const [customGoal, setCustomGoal] = useState('')
+  const [customChallenge, setCustomChallenge] = useState('')
+
+  const [form, setForm] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY)
+      if (saved) return JSON.parse(saved)
+    } catch (e) {}
+    return {
+      name: '', age: '', monthly_income: '', monthly_expenses: '',
+      savings_rate: '', spending_categories: {},
+      financial_goals: [], financial_challenges: [],
+      risk_tolerance: '', investment_experience: '',
+      debt_status: '', lifestyle: ''
+    }
   })
 
-  const totalSteps = 5
+  // Save to localStorage whenever form changes
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(form))
+    } catch (e) {}
+  }, [form])
 
   const update = (field, value) => setForm(f => ({ ...f, [field]: value }))
 
@@ -48,11 +64,35 @@ export default function Onboarding({ setUserProfile, setDiagnosis }) {
     })
   }
 
-  const updateCategory = (cat, val) => {
-    setForm(f => ({
-      ...f,
-      spending_categories: { ...f.spending_categories, [cat]: Number(val) }
-    }))
+  const addCustomGoal = () => {
+    const g = customGoal.trim()
+    if (g && !form.financial_goals.includes(g)) {
+      setForm(f => ({ ...f, financial_goals: [...f.financial_goals, g] }))
+      setCustomGoal('')
+    }
+  }
+
+  const addCustomChallenge = () => {
+    const c = customChallenge.trim()
+    if (c && !form.financial_challenges.includes(c)) {
+      setForm(f => ({ ...f, financial_challenges: [...f.financial_challenges, c] }))
+      setCustomChallenge('')
+    }
+  }
+
+  // Smart contradiction detection
+  const getContextualNotes = () => {
+    const notes = []
+    const savingsRate = Number(form.savings_rate)
+    const { debt_status, financial_challenges } = form
+
+    if (savingsRate > 0 && financial_challenges.includes('No savings habit')) {
+      notes.push('Note: You mentioned a savings rate but also selected "No savings habit" — your report will reflect your actual savings rate.')
+    }
+    if (savingsRate === 0 && debt_status === 'debt_free') {
+      notes.push('Note: Zero savings with no debt — your prescription will focus on building your first savings buffer.')
+    }
+    return notes
   }
 
   const handleSubmit = async () => {
@@ -66,17 +106,21 @@ export default function Onboarding({ setUserProfile, setDiagnosis }) {
         savings_rate: Number(form.savings_rate)
       }
       setUserProfile(profile)
+      localStorage.setItem('finova_profile', JSON.stringify(profile))
       const res = await axios.post(`${API}/api/diagnose`, profile)
       setDiagnosis(res.data.diagnosis)
+      localStorage.setItem('finova_diagnosis', JSON.stringify(res.data.diagnosis))
+      localStorage.removeItem(STORAGE_KEY)
       navigate('/dashboard')
     } catch (e) {
       console.error(e)
-      // Still navigate with profile even if diagnosis fails
       navigate('/dashboard')
     } finally {
       setLoading(false)
     }
   }
+
+  const totalSteps = 5
 
   const steps = [
     {
@@ -86,26 +130,58 @@ export default function Onboarding({ setUserProfile, setDiagnosis }) {
         <div>
           <div className="form-group">
             <label>Your name</label>
-            <input value={form.name} onChange={e => update('name', e.target.value)} placeholder="e.g. Ajasin" />
+            <input
+              value={form.name}
+              onChange={e => update('name', e.target.value)}
+              placeholder="e.g. Gbadebo Adeyemi"
+            />
           </div>
           <div className="form-row">
             <div className="form-group">
               <label>Age</label>
-              <input type="number" value={form.age} onChange={e => update('age', e.target.value)} placeholder="20" />
+              <input
+                type="number"
+                inputMode="numeric"
+                value={form.age}
+                onChange={e => update('age', e.target.value)}
+                placeholder="28"
+                style={{ MozAppearance: 'textfield' }}
+              />
             </div>
             <div className="form-group">
               <label>Monthly Income (₦)</label>
-              <input type="number" value={form.monthly_income} onChange={e => update('monthly_income', e.target.value)} placeholder="50000" />
+              <input
+                type="number"
+                inputMode="numeric"
+                value={form.monthly_income}
+                onChange={e => update('monthly_income', e.target.value)}
+                placeholder="300000"
+                style={{ MozAppearance: 'textfield' }}
+              />
             </div>
           </div>
           <div className="form-row">
             <div className="form-group">
               <label>Monthly Expenses (₦)</label>
-              <input type="number" value={form.monthly_expenses} onChange={e => update('monthly_expenses', e.target.value)} placeholder="3500" />
+              <input
+                type="number"
+                inputMode="numeric"
+                value={form.monthly_expenses}
+                onChange={e => update('monthly_expenses', e.target.value)}
+                placeholder="200000"
+                style={{ MozAppearance: 'textfield' }}
+              />
             </div>
             <div className="form-group">
               <label>Current Savings Rate (%)</label>
-              <input type="number" value={form.savings_rate} onChange={e => update('savings_rate', e.target.value)} placeholder="10" />
+              <input
+                type="number"
+                inputMode="numeric"
+                value={form.savings_rate}
+                onChange={e => update('savings_rate', e.target.value)}
+                placeholder="10"
+                style={{ MozAppearance: 'textfield' }}
+              />
             </div>
           </div>
         </div>
@@ -114,18 +190,27 @@ export default function Onboarding({ setUserProfile, setDiagnosis }) {
     },
     {
       title: "How do you spend your money?",
-      subtitle: "Estimate monthly spending per category",
+      subtitle: "Estimate monthly spending per category (₦)",
       content: (
         <div>
           {CATEGORIES.map(cat => (
             <div className="form-group form-row" key={cat}>
-              <label style={{ textTransform: 'none', fontSize: '14px', color: 'var(--text-primary)', marginBottom: 0, flex: 1, alignSelf: 'center' }}>{cat}</label>
+              <label style={{ textTransform: 'none', fontSize: '14px', color: 'var(--text-primary)', marginBottom: 0, flex: 1, alignSelf: 'center' }}>
+                {cat}
+              </label>
               <div style={{ width: '160px' }}>
                 <input
                   type="number"
+                  inputMode="numeric"
                   placeholder="₦0"
                   value={form.spending_categories[cat] || ''}
-                  onChange={e => updateCategory(cat, e.target.value)}
+                  onChange={e => {
+                    setForm(f => ({
+                      ...f,
+                      spending_categories: { ...f.spending_categories, [cat]: Number(e.target.value) }
+                    }))
+                  }}
+                  style={{ MozAppearance: 'textfield' }}
                 />
               </div>
             </div>
@@ -136,7 +221,7 @@ export default function Onboarding({ setUserProfile, setDiagnosis }) {
     },
     {
       title: "What are your financial goals?",
-      subtitle: "Select all that apply",
+      subtitle: "Select all that apply — or add your own",
       content: (
         <div>
           <div className="checkbox-group">
@@ -149,6 +234,27 @@ export default function Onboarding({ setUserProfile, setDiagnosis }) {
                 {form.financial_goals.includes(g) ? '✓ ' : ''}{g}
               </div>
             ))}
+            {/* Custom goals added by user */}
+            {form.financial_goals.filter(g => !GOALS.includes(g)).map(g => (
+              <div
+                key={g}
+                className="checkbox-item selected"
+                onClick={() => toggleArray('financial_goals', g)}
+              >
+                ✓ {g}
+              </div>
+            ))}
+          </div>
+          <div className="custom-input-row">
+            <input
+              value={customGoal}
+              onChange={e => setCustomGoal(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && addCustomGoal()}
+              placeholder="Add your own goal..."
+            />
+            <button className="btn-secondary" style={{ padding: '10px 16px', fontSize: '13px', whiteSpace: 'nowrap' }} onClick={addCustomGoal}>
+              + Add
+            </button>
           </div>
         </div>
       ),
@@ -169,6 +275,27 @@ export default function Onboarding({ setUserProfile, setDiagnosis }) {
                 {form.financial_challenges.includes(c) ? '✓ ' : ''}{c}
               </div>
             ))}
+            {/* Custom challenges added by user */}
+            {form.financial_challenges.filter(c => !CHALLENGES.includes(c)).map(c => (
+              <div
+                key={c}
+                className="checkbox-item selected"
+                onClick={() => toggleArray('financial_challenges', c)}
+              >
+                ✓ {c}
+              </div>
+            ))}
+          </div>
+          <div className="custom-input-row">
+            <input
+              value={customChallenge}
+              onChange={e => setCustomChallenge(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && addCustomChallenge()}
+              placeholder="Add your own challenge..."
+            />
+            <button className="btn-secondary" style={{ padding: '10px 16px', fontSize: '13px', whiteSpace: 'nowrap' }} onClick={addCustomChallenge}>
+              + Add
+            </button>
           </div>
         </div>
       ),
@@ -223,6 +350,10 @@ export default function Onboarding({ setUserProfile, setDiagnosis }) {
               <option value="hustle">Hustle Mode — Multiple income streams, growth-focused</option>
             </select>
           </div>
+          {/* Contradiction notes */}
+          {getContextualNotes().map((note, i) => (
+            <div key={i} className="context-note">{note}</div>
+          ))}
         </div>
       ),
       valid: form.risk_tolerance && form.investment_experience && form.debt_status && form.lifestyle

@@ -8,7 +8,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 24px 40px;
+  padding: 20px 32px;
   border-bottom: 1px solid var(--border);
 }
 
@@ -36,57 +36,144 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 40px 20px;
+  padding: 32px 20px;
 }
 
 .onboarding-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 48px;
+  padding: 40px;
   width: 100%;
-  max-width: 640px;
+  max-width: 620px;
 }
 
 .step-header {
-  margin-bottom: 36px;
+  margin-bottom: 28px;
 }
 
 .step-subtitle {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--accent-gold);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   font-family: var(--font-mono);
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .step-title {
   font-family: var(--font-display);
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 700;
   letter-spacing: -0.01em;
 }
 
 .step-content {
-  margin-bottom: 36px;
+  margin-bottom: 28px;
 }
 
 .step-actions {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 16px;
-  padding-top: 24px;
+  gap: 12px;
+  padding-top: 20px;
   border-top: 1px solid var(--border);
 }
 
 .form-row {
   display: flex;
-  gap: 16px;
+  gap: 14px;
   align-items: flex-start;
 }
 
 .form-row .form-group {
   flex: 1;
+}
+
+/* Hide number input spinners */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+/* Custom input row */
+.custom-input-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+  align-items: center;
+}
+
+.custom-input-row input {
+  flex: 1;
+}
+
+/* Contradiction note */
+.context-note {
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: rgba(201, 168, 76, 0.08);
+  border: 1px solid rgba(201, 168, 76, 0.25);
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--accent-gold);
+  line-height: 1.5;
+}
+
+/* ── MOBILE RESPONSIVE ──────────────────────────────────── */
+@media (max-width: 600px) {
+  .onboarding-nav {
+    padding: 16px 20px;
+  }
+
+  .onboarding-main {
+    padding: 20px 14px;
+    align-items: flex-start;
+  }
+
+  .onboarding-card {
+    padding: 24px 18px;
+    border-radius: 8px;
+  }
+
+  .step-title {
+    font-size: 20px;
+  }
+
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .form-row .form-group {
+    width: 100%;
+  }
+
+  .step-actions {
+    flex-direction: column-reverse;
+    gap: 10px;
+  }
+
+  .step-actions button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .custom-input-row {
+    flex-direction: column;
+  }
+
+  .custom-input-row button {
+    width: 100%;
+  }
+
+  .checkbox-item {
+    font-size: 13px;
+    padding: 8px 12px;
+  }
 }
