@@ -1,4 +1,4 @@
-# Finova — Diagnose. Prescribe. Transform.
+# Finova — Your Finance Doctor.
 
 > **Your Financial Doctor** — An LLM-powered agentic system that analyzes financial behavior and prescribes personalized resources to transform your financial health.
 
@@ -62,7 +62,7 @@ Finova is a unified AI agent that addresses both tasks of the DSN x BCT LLM Agen
 
 ### 1. Clone the repo
 ```bash
-git clone https://github.com/YOUR_USERNAME/finova.git
+git clone https://github.com/melchijude/FINOVA.git
 cd finova
 ```
 
