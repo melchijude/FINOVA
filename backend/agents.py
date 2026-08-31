@@ -21,7 +21,7 @@ FINANCE_BOOKS = [
 class FinovaAgent:
     def __init__(self):
         self.groq = Groq(api_key=os.getenv("GROQ_API_KEY"))
-        self.model = "llama-3.3-70b-versatile"
+        self.model = "qwen/qwen3.6-27b"
         self.youtube_api_key = os.getenv("YOUTUBE_API_KEY")
         self.listennotes_api_key = os.getenv("LISTENNOTES_API_KEY")
         self.spotify_client_id = os.getenv("SPOTIFY_CLIENT_ID")
